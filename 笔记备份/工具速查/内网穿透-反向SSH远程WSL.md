@@ -233,4 +233,4 @@ timeout 3 bash -c '</dev/tcp/127.0.0.1/2222' && echo open  # TCP 连通测试
 
 ## 关联
 
-[[somezhishi/somezhishi|somezhishi]] · [[somezhishi/工具速查/Termux-平板环境搭建清单|Termux 平板环境搭建清单]] · [[somezhishi/工具速查/Termux-入门与核心概念|Termux 入门与核心概念]]
+[[somezhishi/somezhishi|somezhishi]] · [[somezhishi/工具速查/Termux-平板环境搭建清单|Termux 平板环境搭建清单]] · [[somezhishi/工具速查/Termux-入门与核心概念|Termux 入门与核心概念]] · [[somezhishi/工具速查/远程访问-内网穿透与虚拟组网|远程访问：内网穿透与虚拟组网]] · [[somezhishi/工具速查/DSHGo-远程连接机制|DSH Go 远程连接机制]]

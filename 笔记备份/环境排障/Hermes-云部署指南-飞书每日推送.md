@@ -182,7 +182,7 @@ grep "delivered to feishu" ~/.hermes/logs/agent.log   # 确认投递成功
 | 事项 | 说明 |
 |------|------|
 | 每日写日志（非强制，缺日直接忽略、不补写）并当天 `git commit`；周日晚写并 commit 周复盘 | cron 每次先 `git pull`，不提交就读不到最新内容；昨日无日志时晨报标注「昨日无日志」，不回溯 |
-| 改推送规范 | 改仓库 `.hermes.md` §9/§10（或 `obsidian/课程表.md`、`obsidian/健身/本周训练.md` 等数据文件）→ commit+push，cron 下次运行 `git pull` 后自动生效 |
+| 改推送规范 | 改仓库 `.hermes.md` §9/§10（或 `obsidian/课程表.md`、`obsidian/健身/训练计划.md` 等数据文件）→ commit+push，cron 下次运行 `git pull` 后自动生效 |
 | 查推送是否成功 | `grep "delivered to feishu" ~/.hermes/logs/agent.log` |
 | 健康检查 | `hermes doctor`；`hermes gateway status --system` |
 | 换 provider | `hermes model`，与部署无关，随时可改 |

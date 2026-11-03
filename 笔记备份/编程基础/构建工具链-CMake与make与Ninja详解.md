@@ -104,7 +104,7 @@ arm-none-eabi-gcc → .o 文件 → 链接 → 固件 .elf → objcopy → .bin/
 
 ### 使用场景
 
-- **小项目 / 学习阶段手写 Makefile**：能真正理解编译链接过程，`C-tools/` 阶梯的约定就是纯 C + Makefile。
+- **小项目 / 学习阶段手写 Makefile**：能真正理解编译链接过程，`c_exercises/` 中 P1 `note_stats` 就是纯 C + Makefile；数据结构练习则刻意保持单文件 + `clang`。
 - **多文件、多平台、需要探测库**：用 CMake；工业界与 STM32CubeMX 生成的工程都用它。
 
 ## 三、Ninja 是什么，ninja-build 又是什么

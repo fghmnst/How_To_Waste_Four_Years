@@ -91,7 +91,7 @@ setsid obsidian-gui > ~/.config/obsidian/gui.log 2>&1 &
 ```bash
 #!/bin/bash
 export XDG_RUNTIME_DIR=/mnt/wslg/runtime-dir
-setsid "$HOME/Downloads/Obsidian-1.13.7.AppImage" --ozone-platform=wayland "$@" > ~/.config/obsidian/gui.log 2>&1 &
+setsid "$HOME/Downloads/Obsidian-1.14.5.AppImage" --ozone-platform=wayland "$@" > ~/.config/obsidian/gui.log 2>&1 &
 ```
 
 从此敲 `obsidian-gui` 立即返回提示符。要结束：`pkill -f Obsidian`。
