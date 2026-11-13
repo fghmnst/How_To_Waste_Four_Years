@@ -21,7 +21,7 @@ tags:
 ```text
 c_exercises/data_struc/
 └── exercise/                  # 所有练习都放这里
-    ├── .gitignore             # 忽略任意层级的 out/ 与二进制
+    ├── .gitignore             # 忽略任意层级的 output/ 与二进制
     ├── README.md              # 目录地图 + 编译命令
     ├── 01-maxsubseq/          # 复杂度 & 最大子列和
     │   ├── 1_MaxSubseqSum.c
@@ -35,9 +35,12 @@ c_exercises/data_struc/
     │   ├── for_printN.c
     │   └── recursion_printN.c
     ├── 03-linkedlist/         # 线性表 · 链表
-    │   ├── LinkedList.c
+    │   ├── LL_test.c
+    │   ├── LL_test_malloc_ver.c
+    │   ├── LL_test_malloc_easymerge_ver.c
+    │   ├── mergeLL.c
     │   └── PTA_mergeTwoLists.c
-    └── out/                   # 编译产物，已忽略
+    └── output/                # 编译产物，已忽略
 ```
 
 ## 当前题目与状态
@@ -45,47 +48,50 @@ c_exercises/data_struc/
 | 文件 | 练的是什么 | 状态 |
 |---|---|---|
 | `01-maxsubseq/1_MaxSubseqSum.c` | 最大子列和：暴力穷举，$O(n^3)$ | 可运行；`k < j` 应为 `k <= j`（已知 bug，见 `plan.md` §三） |
-| `01-maxsubseq/2_MaxSubseqSum.c` | 最大子列和：优化穷举，$O(n^2)$ | 可运行 |
+| `01-maxsubseq/2_MaxSubseqSum.c` | 最大子列和：优化穷举，$O(n^2)$ | 可运行；函数名还叫 `MaxSubseqSum1`（复制遗留，可用但重名） |
 | `01-maxsubseq/3_MaxSubseqSum.c` | 最大子列和：分治，$O(n \log n)$ | **已完成**：`Max3` + `DivideAndConquer` 已接进 `MaxSubseqSum3` |
 | `01-maxsubseq/4_MaxSubseqSum.c` | 最大子列和：在线处理，$O(n)$ | **已完成** |
 | `01-maxsubseq/duibi.c` | 多项式求值计时：朴素 `pow` 与秦九韶（Horner）对比 | 可运行；需 `-lm` |
 | `01-maxsubseq/PTA_1MSS.c` | PTA 最大子列和 | 已完成 |
 | `02-recursion/for_printN.c` / `recursion_printN.c` | 循环 vs 递归打印 `1..N` | 可运行；`N` 从标准输入读取 |
-| `03-linkedlist/LinkedList.c` | 最小链表：3 个结点手工串联 | 可运行，输出 `3 / 4 / 5` |
+| `03-linkedlist/LL_test.c` | 最小链表：3 个结点手工串联 | 可运行，输出 `3 / 4 / 5` |
+| `03-linkedlist/LL_test_malloc_ver.c` | 同上，结点改用 `malloc` 申请、用完 `free` | 可运行 |
+| `03-linkedlist/LL_test_malloc_easymerge_ver.c` | 两条链表首尾相接（最朴素的「合并」，不排序） | 可运行 |
+| `03-linkedlist/mergeLL.c` | 带头结点的归并：`Read` / `Merge` / `Print` | 可运行 |
 | `03-linkedlist/PTA_mergeTwoLists.c` | PTA 02-线性结构1 两个有序链表合并（本地可跑版） | 样例 + 3 组边界通过；待交 PTA |
 
 > [!note] 命名与分组
 > 2026-10-30 起按**主题分子文件夹**（`01-maxsubseq` / `02-recursion` / `03-linkedlist`），**旧文件保持原名不改**，保 git 历史与回看习惯。
-> 新增练习统一 `exampleN_<主题>.c` 或 `PTA_<题名>.c`；产物一律进 `out/`。
+> 新增练习统一 `exampleN_<主题>.c` 或 `PTA_<题名>.c`；产物一律进 `output/`。
 
 ## 怎么编译运行
 
-**一律在 `exercise/` 根目录执行**，产物统一放 `out/`（`.gitignore` 已按任意层级忽略）：
+**一律在 `exercise/` 根目录执行**，产物统一放 `output/`（`.gitignore` 已按任意层级忽略）：
 
 ```bash
 cd ~/SomeThingFunny/projects/c_exercises/data_struc/exercise
-mkdir -p out
+mkdir -p output
 
 # 普通题
-gcc -Wall -Wextra 03-linkedlist/LinkedList.c -o out/LinkedList
-./out/LinkedList
+gcc -Wall -Wextra 03-linkedlist/LL_test.c -o output/LL_test
+./output/LL_test
 
 # 需要 <math.h> 的题，记得加 -lm
-gcc -Wall -Wextra 01-maxsubseq/duibi.c -o out/duibi -lm
-./out/duibi
+gcc -Wall -Wextra 01-maxsubseq/duibi.c -o output/duibi -lm
+./output/duibi
 
 # 带输入的程序用管道喂数据
-printf '3\n1 3 5\n5\n2 4 6 8 10\n' | ./out/PTA_mergeTwoLists
+printf '3\n1 3 5\n5\n2 4 6 8 10\n' | ./output/PTA_mergeTwoLists
 ```
 
 - `-Wall -Wextra`：把编译器当第一道错题本，警告不要无视。
 - `-O2`：计时类练习要注意优化可能改变相对耗时，结论看数量级即可。
-- `out/`：编译产物统一放这里，已被 `exercise/.gitignore` 忽略，不会误提交。
+- `output/`：编译产物统一放这里，已被 `exercise/.gitignore` 忽略，不会误提交。
 - 用到 `pow` 等数学函数时必须加 `-lm`，否则链接阶段会报未定义引用。
 
 ## 约定
 
-- 一题一个 `.c` 文件，源码入库；可执行文件、`*.o`、`out/` 不入库。
+- 一题一个 `.c` 文件，源码入库；可执行文件、`*.o`、`output/` 不入库。
 - 按主题分文件夹；同一讲的题放同一个文件夹，新主题新建文件夹。
 - 不引入 Makefile / CMake；一两条 `gcc` 命令能解决的事，不搭构建系统。
 - 保留失败尝试和调试过程；旧练习不删，方便回看思路变化。
@@ -114,7 +120,7 @@ printf '3\n1 3 5\n5\n2 4 6 8 10\n' | ./out/PTA_mergeTwoLists
 > 1. 为什么 `duibi.c` 编译要加 `-lm`，而 `for_printN.c` 不用？
 > 2. 最大子列和的全负数数组，为什么很多教材规定返回 0 而不是最大的负数？
 > 3. 分治算法里“跨中线”的最大和，为什么只要从中间向左右各扫一遍？
-> 4. 如果直接把 `out/duibi` 提交进 git，会带来什么问题？
+> 4. 如果直接把 `output/duibi` 提交进 git，会带来什么问题？
 
 ## 关联
 

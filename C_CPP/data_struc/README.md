@@ -50,33 +50,33 @@
 
 ## 编译运行
 
-**在本目录（`data_struc/`）执行**，产物统一丢进 `out/`（`.gitignore` 已忽略任意层级的 `out/`）：
+**在本目录（`data_struc/`）执行**，产物统一丢进 `output/`（`.gitignore` 已忽略任意层级的 `output/`）：
 
 ```bash
-mkdir -p out
+mkdir -p output
 
 # 普通题
-gcc -Wall 03-linkedlist/LL_test.c -o out/LL_test && ./out/LL_test
+gcc -Wall 03-linkedlist/LL_test.c -o output/LL_test && ./output/LL_test
 
 # 用到 <math.h> 的题要加 -lm，否则链接阶段报「未定义引用」
-gcc -Wall 01-maxsubseq/duibi.c -o out/duibi -lm && ./out/duibi
+gcc -Wall 01-maxsubseq/duibi.c -o output/duibi -lm && ./output/duibi
 ```
 
 带输入的程序用管道喂数据：
 
 ```bash
-printf '3\n1 3 5\n5\n2 4 6 8 10\n' | ./out/PTA_mergeTwoLists
+printf '3\n1 3 5\n5\n2 4 6 8 10\n' | ./output/PTA_mergeTwoLists
 ```
 
 - `-Wall`：把编译器当第一道错题本，警告不要无视。
 - `-lm`：`pow` 这类数学函数在单独的库里，不写 `-lm` 链接不过。
-- `out/`：编译产物统一放这里，不会误提交。
+- `output/`：编译产物统一放这里，不会误提交。
 
 ## 命名约定
 
 - 新文件用 `exampleN_<主题>.c` 或 `PTA_<题名>.c`
 - 旧文件保持原名不改，保 git 历史和回看习惯
-- 源码入库，可执行文件 / `*.o` / `out/` 不入库
+- 源码入库，可执行文件 / `*.o` / `output/` 不入库
 
 ## 已知问题（故意留着）
 
