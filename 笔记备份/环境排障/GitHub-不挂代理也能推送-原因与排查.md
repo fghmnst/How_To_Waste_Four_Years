@@ -1,5 +1,6 @@
 ---
 date: 2026-09-25
+updated: 2026-11-11
 tags: [入门, git, ssh]
 ---
 
@@ -7,6 +8,9 @@ tags: [入门, git, ssh]
 
 > [!note] 一句话结论
 > GitHub 在大陆**不是被完全封锁，而是"间歇性干扰"**——时通时不通。这次不挂代理 `git push` 成功，说明恰好赶上了"通"的窗口，而且是走的 SSH 通道（22 端口），和浏览器访问 GitHub 的 HTTPS 通道（443 端口）受干扰的情况不一样。**能用就用，不用特意挂代理；哪天卡住再按文末方案处理。**
+
+> [!info] 2026-11-11 状态更新：直连已不稳定，SSH 已固定走代理
+> 当天 `git pull` 卡死（无报错、无超时），定位到 SSH 在密钥交换阶段被掐；备用通道 `ssh.github.com:443` 同样卡死。最终用 `ProxyCommand` 让 SSH 走本机代理解决，并已固化进 `~/.ssh/config`。**现状是：github.com 的 git 操作依赖代理软件开启。**详见文末「2026-11-11 亲历」。
 
 ## 先建立一个画面：墙不是铁板，是雾霾
 
@@ -84,9 +88,61 @@ Host github.com
 
 - 意思：以后连 `github.com` 时，实际连到 `ssh.github.com` 的 443 端口，以 git 用户身份登录。
 - 验证：`ssh -T git@github.com`，看到 `Hi 用户名!` 即通。
+- ⚠️ 2026-11-11 实测：这条**也可能卡死**（同样停在密钥交换），救不回来时直接跳到方案三。
 
 **方案三：走代理。**
 给 git 单独配代理（不影响其他程序），或让代理软件 TUN 模式接管。配了 443 通道后一般用不到这步。
+
+### 2026-11-11 亲历：SSH 卡在密钥交换，443 备用通道也无效
+
+> [!warning] 这次方案一、方案二都没救回来
+> 重试无效；`ssh.github.com:443` **同样卡死**。最后用方案三的「SSH 版」——`ProxyCommand` 走本机代理解决，并已固化进 `~/.ssh/config`。
+
+**症状**：`git pull` 敲下去没有任何输出，不报错，也不超时，就那样挂着，只能 Ctrl+C。很容易误判成"在等我输密码"或"仓库坏了"。
+
+**逐步定位**（前 5 步都只读、无副作用）：
+
+| 检查 | 命令 | 结果 | 说明 |
+|---|---|---|---|
+| 本地仓库 | `git status -sb`、`ls .git/*.lock` | 干净、无锁文件 | 排除仓库本身的问题 |
+| DNS | `getent hosts github.com` | 正常解析 | 不是域名解析 |
+| HTTPS 通路 | `curl -s -o /dev/null -w '%{http_code}' https://github.com` | `200`，1.5 秒 | ⚠️ 这条走的是 `https_proxy` 环境变量，**不能**证明直连也通 |
+| TCP 握手 | `bash -c 'cat < /dev/null > /dev/tcp/github.com/22'` | 通 | 端口没被封，握手没问题 |
+| SSH 握手 | `ssh -vv -T git@github.com` | 停在 `expecting SSH2_MSG_KEX_ECDH_REPLY` | **真正的卡点** |
+
+`expecting SSH2_MSG_KEX_ECDH_REPLY` 的含义：客户端已经把密钥交换的请求发出去，正在等服务器回话——**回话永远没来**。此时连接既没断也没超时，所以就"卡"在那里。这说明干扰发生在 SSH 协议内部，不是端口被堵。
+
+**为什么会被"代理没问题"骗过去**：`http_proxy` / `https_proxy` 这类环境变量只有 HTTP 客户端（curl、浏览器、pip、npm）会读，**git 走 SSH 协议时完全不看这些变量**。于是同一个终端里 curl 一秒开 GitHub，`git pull` 却挂死——两者走的根本不是同一条路。
+
+**解法：让 SSH 自己也走代理**（`~/.ssh/config` 加一段）：
+
+```
+Host github.com
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
+    ProxyCommand nc -X connect -x 127.0.0.1:7890 %h %p
+```
+
+逐行解释：
+- `ProxyCommand`：把"怎么连上目标主机"这件事外包给后面这条命令；
+- `nc -X connect -x 127.0.0.1:7890 %h %p`：用 nc（netcat）以 **HTTP CONNECT** 方式连本机 7890 端口的代理，再由代理转发到 `%h`（主机）的 `%p`（端口）；
+- `IdentityFile` + `IdentitiesOnly yes`：只用这一把钥匙，别把 `~/.ssh/` 里的钥匙挨个试一遍（多钥匙试错容易被服务器限流）。
+
+**验证**：
+
+```bash
+ssh -o ControlMaster=no -o ControlPath=none -T git@github.com   # 看到 Hi 用户名! 即通
+time git pull                                                  # 从"挂死"变成约 1 秒返回
+```
+
+`ControlMaster=no` + `ControlPath=none` 是临时关掉连接复用，确保测的是配置本身而不是复用了旧连接。
+
+**代价与注意**：
+- 代理软件**没开时 `git pull` 会立刻报 `Connection refused`**——这比静默挂死好，至少一眼知道问题在哪；
+- 配置只对 `github.com` 生效，`server1` / `server2` 这类直连主机完全不受影响；
+- 改配置前先备份：`cp ~/.ssh/config ~/.ssh/config.bak-$(date +%Y%m%d-%H%M%S)`，出问题直接拷回去。
 
 ## 另一类推送失败：GH007 邮箱隐私保护（2026-09-26 补充）
 
@@ -145,6 +201,8 @@ git log -5 --format='%h %ae'           # 回顾最近几条提交实际用的邮
 | HTTPS | 加密的网页协议，浏览器和 `https://` 链接用的就是它，默认走 443 端口 |
 | 端口 | 一台服务器上的"门牌号"，不同服务在不同门口接待：22 是 SSH 的门，443 是 HTTPS 的门 |
 | `Connection reset` | 连接刚建立就被对方掐断——干扰的典型表现之一 |
+| `ProxyCommand` | 告诉 SSH"先跑这条命令来建立连接"，于是可以借道代理去连目标 |
+| `expecting SSH2_MSG_KEX_ECDH_REPLY` | SSH 在等服务器回密钥交换应答；停在这一步＝回话被掐了，连接会一直挂着 |
 | `GH007` | GitHub 拒收推送的错误代码：要推的 commit 会暴露你的私密邮箱，被服务端拦下（详见上文「另一类推送失败」） |
 
 > [!question]- 自测：不看正文，能答上来吗？
@@ -153,7 +211,8 @@ git log -5 --format='%h %ae'           # 回顾最近几条提交实际用的邮
 > 3. `git remote -v` 输出 `git@github.com:...` 说明走哪个通道、哪个端口？
 > 4. 三步自查"隐形代理"分别查什么？
 > 5. `ssh.github.com:443` 备用通道的原理是什么？（提示：把 SSH 塞进哪扇"门"里）
+> 6. `git pull` 静默挂死时，为什么"curl 能打开 GitHub"不能证明网络没问题？该用哪条命令找真正的卡点？
 
 ## 关联
 
-[[somezhishi/编程基础/Git多远程-切换与双仓库同步|Git 多远程]] · [[somezhishi/编程基础/SSH密钥-修改口令与ssh-keygen参数详解|SSH 密钥]] · [[somezhishi/工具速查/GitHub贡献计算-规则与排查|GitHub 贡献计算]] · [[somezhishi/somezhishi|somezhishi]]
+[[somezhishi/编程基础/Git多远程-切换与双仓库同步|Git 多远程]] · [[somezhishi/编程基础/SSH密钥-修改口令与ssh-keygen参数详解|SSH 密钥]] · [[somezhishi/工具速查/GitHub贡献计算-规则与排查|GitHub 贡献计算]] · [[somezhishi/环境排障/SSH代理隧道-ProxyCommand与端口对齐|SSH 代理隧道]] · [[somezhishi/somezhishi|somezhishi]]

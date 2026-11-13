@@ -1,0 +1,14 @@
+# 编译产物
+duibi
+*.o
+*.obj
+*.out
+a.out
+
+# clangd 缓存
+.cache/
+compile_commands.json
+
+# 编译产物目录（任意层级）
+output/
+out/
